@@ -1,0 +1,6 @@
+---
+subscription_repo_url: https://github.com/skylarscaling/acm-install-odf.git
+subscription_branch: main
+app_name: odf-installer
+app_namespace: acm-install-policies
+...
