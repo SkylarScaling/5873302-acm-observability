@@ -83,12 +83,12 @@ networking:
 {% endif %}
 platform:
   aws:
-    region: {{ install_config.aws_region }}
+    region: {{ aws.aws_region }}
 {% if install_config.infra_tags is defined %}
     userTags:
       {{ install_config.infra_tags | to_nice_yaml | indent(6) }}
 {% endif %}
-pullSecret: '{{ install_config.pull_secret }}'
+pullSecret: '{{ install_config.pull_secret | to_json }}'
 {% if install_config.ssh_key is defined %}
 sshKey: |
    {{ install_config.ssh_key }}

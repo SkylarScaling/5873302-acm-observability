@@ -5,7 +5,7 @@
   tasks:
     - name: Set kubeconfig fact
       set_fact:
-        kubefile: "{{ working_dir }}/install/{{ ocp_cluster.name }}/auth/kubeadmin-password"
+        kubefile: "{{ install_dir }}/{{ ocp_cluster.name }}/auth/kubeadmin-password"
 
     - name: Check if cluster auth is working
       ansible.builtin.command:
