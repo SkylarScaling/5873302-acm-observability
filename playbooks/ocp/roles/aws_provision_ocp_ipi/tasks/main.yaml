@@ -1,7 +1,7 @@
 ---
 - name: "Check if cluster directory already exists"
   ansible.builtin.stat:
-    path: "{{ working_dir }}/install/{{ ocp_cluster.name }}"
+    path: "{{ install_dir }}/{{ ocp_cluster.name }}"
   register: cluster_dir_stat
 
 - name: Skip provisioning if cluster exists
@@ -14,12 +14,12 @@
     - name: create install_dir to work in
       ansible.builtin.file:
         state: directory
-        path: "{{ working_dir }}/install/{{ ocp_cluster.name }}"
-      register: install_dir
+        path: "{{ install_dir }}/{{ ocp_cluster.name }}"
+      register: install_path
 
     - name: print install_dir location for admin
       ansible.builtin.debug:
-        msg: "The working directory location is {{ install_dir.path }}"
+        msg: "The working directory location is {{ install_path.path }}"
 
     - name: Create .aws directory
       ansible.builtin.file:
@@ -42,10 +42,10 @@
     - name: Populate install-config template
       ansible.builtin.template:
         src: "{{ role_path }}/templates/install-config.yaml.j2"
-        dest: "{{ install_dir.path }}/install-config.yaml"
+        dest: "{{ install_path.path }}/install-config.yaml"
 
     - name: run IPI installer
-      command: "{{ bin_dir }}/openshift-install create cluster --dir={{ install_dir.path }} --log-level=debug"
+      command: "{{ bin_dir }}/openshift-install create cluster --dir={{ install_path.path }} --log-level=debug"
       async: 3600
       poll: 0
       register: cluster_deploy
@@ -57,19 +57,19 @@
       until: job_status.finished
       retries: 120
       delay: 30
-
-    - debug:
-        msg: "Cluster console available at: https://console-openshift-console.apps.{{ cluster_name }}.{{ base_domain }}/"
-
-    - name: Get kubeconfig auth
-      set_fact:
-        kubefile: "{{ install_dir.path }}/auth/kubeadmin-password"
-
-    - name: Slurp the remote file
-      ansible.builtin.slurp:
-        src: "{{ kubefile }}"
-      register: remote_kube_file
-
-    - debug:
-        msg: "kubeadmin pw: {{ remote_kube_file['content'] | b64decode }}"
   when: not cluster_dir_stat.stat.exists
+
+- debug:
+    msg: "Cluster console available at: https://console-openshift-console.apps.{{ ocp_cluster.name }}.{{ ocp_cluster.base_domain }}/"
+
+- name: Get kubeconfig auth
+  set_fact:
+    kubefile: "{{ install_dir }}/{{ ocp_cluster.name }}/auth/kubeadmin-password"
+
+- name: Slurp the remote file
+  ansible.builtin.slurp:
+    src: "{{ kubefile }}"
+  register: remote_kube_file
+
+- debug:
+    msg: "kubeadmin pw: {{ remote_kube_file['content'] | b64decode }}"

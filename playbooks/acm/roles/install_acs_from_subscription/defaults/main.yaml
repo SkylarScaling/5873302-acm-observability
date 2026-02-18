@@ -1,0 +1,6 @@
+---
+subscription_repo_url: https://github.com/skylarscaling/acm-install-acs.git
+subscription_branch: main
+app_name: acs-installer
+app_namespace: acs-install-policies
+...
