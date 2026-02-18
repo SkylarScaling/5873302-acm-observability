@@ -1,0 +1,35 @@
+---
+- name: Perform Day 2 Configuration
+  gather_facts: false
+  hosts: localhost
+  #  vars_prompt:
+  #    # Prompt for cluster name
+  #    - name: ocp_cluster_address
+  #      prompt: Enter OCP Cluster Address (e.g. clustername.domain.com)
+  #      private: no
+  #      confirm: no
+  tasks:
+    - name: Set Playbook Facts
+      set_fact:
+        cluster_address: "{{ ocp_cluster.name }}.{{ ocp_cluster.base_domain }}"
+
+    - include_role:
+        name: admin_create_acm_service_account
+
+    - include_role:
+        name: install_odf_from_subscription
+
+    - include_role:
+        name: install_mco_from_subscription
+
+    - include_role:
+        name: install_acs_from_subscription
+
+    - include_role:
+        name: install_quay_from_subscription
+
+    - include_role:
+        name: install_ocp_gitops_from_subscription
+
+    - include_role:
+        name: install_ocp_pipelines_from_subscription

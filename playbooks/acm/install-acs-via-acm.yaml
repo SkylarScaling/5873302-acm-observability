@@ -1,0 +1,17 @@
+---
+- name: Install Red Hat Advanced Cluster Security (RHACS) via Advanced Cluster Management (RHACM)
+  gather_facts: false
+  hosts: localhost
+  tasks:
+    - name: Set Playbook Facts
+      set_fact:
+        cluster_address: "{{ ocp_cluster.name }}.{{ ocp_cluster.base_domain }}"
+
+    - name: Create ACM Service Account
+      include_role:
+        name: admin_create_acm_service_account
+
+    - name: Install ACS
+      include_role:
+        name: install_acs_from_subscription
+...
