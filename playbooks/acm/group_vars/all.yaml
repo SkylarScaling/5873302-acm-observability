@@ -1,4 +1,5 @@
 ---
+bin_dir: /usr/local/bin
 state: present
 ocp_roles: "../../ocp/roles"
 cluster_admin_service_account_name: ansible-playbook-service-account-cluster-admin
