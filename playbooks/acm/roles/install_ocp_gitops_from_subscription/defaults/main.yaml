@@ -1,6 +1,0 @@
----
-subscription_repo_url: https://github.com/skylarscaling/acm-install-openshift-gitops.git
-subscription_branch: main
-app_name: gitops-installer
-app_namespace: acm-install-policies
-...
