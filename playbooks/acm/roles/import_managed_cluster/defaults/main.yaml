@@ -1,4 +1,0 @@
----
-bin_dir: /usr/local/bin
-state: present
-...
