@@ -9,8 +9,11 @@
 - name: Provision OCP Cluster on AWS via IPI
   ansible.builtin.import_playbook: ../playbooks/ocp/provision-cluster.yaml
 
-- name: Apply Day 2 Config
-  ansible.builtin.import_playbook: ../playbooks/ocp/day2-config.yaml
+- name: Install OpenShift GitOps (ArgoCD)
+  ansible.builtin.import_playbook: ../playbooks/ocp/install-argo.yaml
+
+- name: Install Day 2 Config via GitOps
+  ansible.builtin.import_playbook: ../playbooks/argo/day2-config.yaml
 
 - name: Cluster Provisioning Complete
   gather_facts: false
