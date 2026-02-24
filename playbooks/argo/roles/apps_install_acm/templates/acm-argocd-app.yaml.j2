@@ -15,11 +15,12 @@ spec:
     server: https://kubernetes.default.svc
     namespace: {{ acm_target_namespace }}
   syncPolicy:
-  {% if acm_argocd_sync_policy == "Automatic" %}
-automated:
-  prune: true
-  selfHeal: true
-  {% endif %}
-syncOptions:
-  - CreateNamespace=true
-  - ServerSideApply=true
+{% if acm_argocd_sync_policy == "Automatic" %}
+    automated:
+      prune: true
+      selfHeal: true
+{% endif %}
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - SkipDryRunOnMissingResource=true

@@ -7,7 +7,7 @@ acm_argocd_sync_policy: "Automatic"
 
 # Git Repository Configuration
 acm_git_repo_url: "https://github.com/SkylarScaling/gitops-install-acm.git"
-acm_git_repo_path: "acm-manifests"
+acm_git_repo_path: "acm"
 acm_git_repo_revision: "main"
 
 # Target Namespace for ACM deployment
