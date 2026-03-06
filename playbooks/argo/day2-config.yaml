@@ -1,6 +1,8 @@
 ---
 - name: Install Day 2 Config via OpenShift GitOps (ArgoCD)
   hosts: localhost
+  vars_files:
+    - ../group_vars/all.yaml
   connection: local
   gather_facts: false
   environment:
