@@ -110,6 +110,12 @@
     kind: APIService
     name: v1.admission.cluster.open-cluster-management.io
     state: absent
+
+- name: "Get all KlusterletAddonConfig resources"
+  kubernetes.core.k8s_info:
+    api_version: agent.open-cluster-management.io/v1
+    kind: KlusterletAddonConfig
+  register: klusterlet_addon_configs
   ignore_errors: true
   failed_when: false
   when: cleanup_managed_clusters
@@ -167,6 +173,19 @@
   ignore_errors: true
   failed_when: false
   when: target_delete_validating_webhook_configurations is defined and target_delete_validating_webhook_configurations | length > 0
+- name: "Delete all KlusterletAddonConfig resources"
+  kubernetes.core.k8s:
+    api_version: agent.open-cluster-management.io/v1
+    kind: KlusterletAddonConfig
+    name: "{{ item.metadata.name }}"
+    namespace: "{{ item.metadata.namespace }}"
+    state: absent
+  loop: "{{ klusterlet_addon_configs.resources | default([]) }}"
+  when:
+    - cleanup_managed_clusters
+    - klusterlet_addon_configs.resources is defined
+    - klusterlet_addon_configs.resources | length > 0
+  ignore_errors: true
 
 - name: "Delete ACM operator namespace"
   kubernetes.core.k8s:
