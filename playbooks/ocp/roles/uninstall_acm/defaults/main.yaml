@@ -20,6 +20,21 @@ multiclusterhub_deletion_retries: 60
 # Delay between retries (in seconds)
 multiclusterhub_deletion_delay: 10
 
+# MultiClusterObservability CR name (default is 'observability')
+mco_cr_name: "observability"
+
+# Namespace where MultiClusterObservability CR is installed
+mco_cr_namespace: "open-cluster-management"
+
+# Wait for MultiClusterObservability CR to be fully deleted
+wait_for_mco_deletion: true
+
+# Maximum retries when waiting for MultiClusterObservability deletion
+mco_deletion_retries: 60
+
+# Delay between retries when waiting for MultiClusterObservability deletion (seconds)
+mco_deletion_delay: 10
+
 # Delete the operator CSV after uninstalling
 delete_operator_csv: true
 

@@ -1,0 +1,27 @@
+---
+# Name of the MultiClusterObservability custom resource to delete (default is 'observability')
+mco_cr_name: "observability"
+
+# Namespace where MultiClusterObservability CR is installed (often open-cluster-management with the ACM operator)
+mco_cr_namespace: "open-cluster-management"
+
+# Wait for MultiClusterObservability CR to be fully deleted
+wait_for_mco_deletion: true
+
+# Maximum retries when waiting for CR deletion
+mco_deletion_retries: 60
+
+# Delay between retries (seconds)
+mco_deletion_delay: 10
+
+# Remove ArgoCD Application for MCO if present (set to true when MCO was installed via GitOps)
+remove_argocd_application: true
+
+# ArgoCD Application name for MCO (used when remove_argocd_application is true)
+mco_argocd_app_name: "mco-observability"
+
+# ArgoCD Application namespace
+mco_argocd_namespace: "openshift-gitops"
+
+# Delete the observability namespace after removing the CR (removes Thanos, Grafana, etc.)
+delete_observability_namespace: false
