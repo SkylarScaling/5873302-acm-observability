@@ -1,0 +1,32 @@
+---
+# OpenShift GitOps (Argo CD) instance namespace
+gitops_namespace: "openshift-gitops"
+
+# OpenShift GitOps operator subscription namespace
+gitops_operator_namespace: "openshift-operators"
+
+# OpenShift GitOps operator subscription name
+gitops_operator_subscription_name: "openshift-gitops-operator"
+
+# Directory where to save Argo RBAC and repo connection manifests (created if missing)
+gitops_backup_dir: "{{ playbook_dir | default('.') }}/gitops-backup"
+
+# Save Argo CD RBAC ConfigMap (argocd-rbac-cm) from the GitOps namespace
+save_argocd_rbac_cm: true
+
+# ClusterRoleBinding names that grant Argo CD permissions (e.g. openshift-gitops-*-admin). All listed will be exported if they exist.
+gitops_rbac_clusterrolebinding_names:
+  - openshift-gitops-acm-admin
+  - openshift-gitops-odf-admin
+
+# Save repository connection secrets (Secrets with label argocd.argoproj.io/secret-type=repository)
+save_repo_connections: true
+
+# Save cluster connection secrets (Secrets with label argocd.argoproj.io/secret-type=cluster). Set false if you do not use cluster secrets.
+save_cluster_connections: false
+
+# Delete the GitOps namespace after uninstalling the operator (removes any remaining resources)
+delete_gitops_namespace: false
+
+# Delete the operator CSV after removing the subscription
+delete_operator_csv: true
