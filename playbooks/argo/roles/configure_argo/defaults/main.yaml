@@ -2,6 +2,7 @@
 # defaults/main.yaml
 repo_name: gitops-install-acm
 repo_url: git@github.com:SkylarScaling/gitops-install-acm.git
+
 argocd_project: acm
 
 # defaults/main.yaml
