@@ -5,11 +5,21 @@ acm_multiclusterhub_name: "multiclusterhub"
 # ACM MultiClusterHub namespace (default is 'open-cluster-management')
 acm_multiclusterhub_namespace: "open-cluster-management"
 
-# ACM operator subscription name (default is 'advanced-cluster-management')
-acm_operator_subscription_name: "advanced-cluster-management"
-
 # ACM operator subscription namespace (default is 'open-cluster-management')
 acm_operator_subscription_namespace: "open-cluster-management"
+
+# Multicluster Engine operator (Subscription + CSV) — default install namespace
+mce_operator_subscription_name: "multicluster-engine"
+mce_operator_subscription_namespace: "multicluster-engine"
+# Remove MCE Subscription and CSV after ACM uninstall (set false if MCE not installed separately)
+delete_mce_operator: true
+delete_mce_operator_csv: true
+
+# Remove ACM/MCE dynamic console plugins (ConsolePlugin CRs + Console operator plugin list)
+delete_acm_console_plugins: true
+acm_console_plugin_names:
+  - "acm"
+  - "mce"
 
 # Wait for MultiClusterHub deletion to complete
 wait_for_multiclusterhub_deletion: true
@@ -39,7 +49,7 @@ mco_deletion_delay: 10
 delete_operator_csv: true
 
 # Delete the operator namespace after uninstalling
-delete_operator_namespace: false
+delete_operator_namespace: true
 
 # Clean up ManagedCluster resources (set to false if you want to keep them)
 cleanup_managed_clusters: false
