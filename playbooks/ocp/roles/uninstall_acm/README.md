@@ -87,6 +87,9 @@ Or:
 | `acm_multiclusterhub_namespace` | `open-cluster-management` | MultiClusterHub namespace |
 | `mco_cr_name` | `observability` | MultiClusterObservability CR name |
 | `mco_cr_namespace` | `open-cluster-management` | MultiClusterObservability namespace |
+| `remove_argocd_application` | `false` | Set **`true`** to delete the Argo CD **Application** for MCO before removing the MCO CR (matches `apps_install_mco` / GitOps) |
+| `mco_argocd_app_name` | `mco-observability` | Argo CD Application name |
+| `mco_argocd_namespace` | `openshift-gitops` | Namespace of the Argo CD Application |
 | `acm_operator_subscription_name` | `advanced-cluster-management` | ACM operator Subscription |
 | `acm_operator_subscription_namespace` | `open-cluster-management` | Subscription namespace |
 | `wait_for_multiclusterhub_deletion` | `true` | (reserved) wait for MCH deletion |
