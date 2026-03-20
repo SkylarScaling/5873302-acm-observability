@@ -396,7 +396,7 @@
     namespace: "{{ mco_argocd_namespace }}"
   register: mco_argocd_app_info
   ignore_errors: true
-  when: remove_argocd_application | bool
+  when: remove_argocd_application | default(false) | bool
 
 - name: "Delete ArgoCD Application for MCO"
   kubernetes.core.k8s:
@@ -405,9 +405,10 @@
     name: "{{ mco_argocd_app_name }}"
     namespace: "{{ mco_argocd_namespace }}"
     state: absent
-  when:
-    - remove_argocd_application | bool
-    - mco_argocd_app_info.resources | length > 0
+  when: >-
+    (remove_argocd_application | default(false) | bool)
+    and (mco_argocd_app_info is defined)
+    and (mco_argocd_app_info.resources | default([]) | length > 0)
 
 # Check if MultiClusterObservability CR exists
 - name: "Check if MultiClusterObservability custom resource exists"
