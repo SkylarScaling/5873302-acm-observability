@@ -310,7 +310,7 @@
     - console_operator_cr.resources | default([]) | length > 0
     - (console_operator_cr.resources[0].spec.plugins | default([]) | intersect(acm_console_plugin_names) | length) > 0
 
-# ManagedCluster / KlusterletAddonConfig removal lives in tasks/main.yaml (run before hub teardown when using hub_uninstall)
+# ManagedCluster / KlusterletAddonConfig removal: tasks/managed_clusters_detach.yaml (before MCH via hub_uninstall / main)
 
 - name: "Delete API services resources"
   kubernetes.core.k8s:
