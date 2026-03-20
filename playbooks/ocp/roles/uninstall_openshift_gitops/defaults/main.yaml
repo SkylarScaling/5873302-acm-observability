@@ -2,8 +2,12 @@
 # OpenShift GitOps (Argo CD) instance namespace
 gitops_namespace: "openshift-gitops"
 
-# OpenShift GitOps operator subscription namespace
+# OpenShift GitOps operator subscription namespace (OLM Subscription + CSV live here in default installs)
 gitops_operator_namespace: "openshift-operators"
+
+# Dedicated namespace used by some installs (OperatorGroup + operator workload). Remove on uninstall.
+gitops_operator_dedicated_namespace: "openshift-gitops-operator"
+delete_gitops_operator_dedicated_namespace: true
 
 # OpenShift GitOps operator subscription name
 gitops_operator_subscription_name: "openshift-gitops-operator"
