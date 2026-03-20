@@ -4,7 +4,7 @@ The role splits work into:
 
 | Entry | File | What it does |
 |-------|------|----------------|
-| **Default / `tasks_from: main.yaml`** | `tasks/main.yaml` | Deletes **MultiClusterObservability** (if present), then **detaches managed clusters** (KlusterletAddonConfig + ManagedCluster) when `cleanup_managed_clusters` is true. |
+| **Default / `tasks_from: main.yaml`** | `tasks/main.yaml` | When `cleanup_managed_clusters`: runs **`managed_clusters_detach.yaml`** first (KlusterletAddonConfig + **ManagedCluster** before **MultiClusterHub** in hub flows), then deletes **MultiClusterObservability** if present. |
 | **Full hub + operator uninstall** | `tasks/full_uninstall.yaml` | **Imports `hub_uninstall.yaml` first** (MCO + detach when `full`, **MultiClusterHub** delete, optional CR-only `end_play`), then MCE/ACM operator teardown (Subscription, CSV, webhooks, namespaces, …). |
 | **Hub phase only** | `tasks/hub_uninstall.yaml` | Same hub steps as above **without** importing operator teardown. Use for **`multiclusterhub_cr_only`** or when you only want MCO/MCH work without `full_uninstall`. |
 
@@ -13,7 +13,7 @@ The role splits work into:
 | Mode | Behavior |
 |------|----------|
 | **`full`** (default) | Hub phase runs **main** (MCO + detach), then removes **MultiClusterHub**. If `tasks_from` is **`full_uninstall.yaml`**, operator/MCE/webhook/namespace teardown follows. |
-| **`multiclusterhub_cr_only`** | Hub phase removes only the **MultiClusterHub** CR and **`end_play`s**. Operator Subscription/CSV unchanged. Does **not** run **main** (MCO and managed clusters are left as-is). |
+| **`multiclusterhub_cr_only`** | Runs **`managed_clusters_detach.yaml`** first when `cleanup_managed_clusters`, then removes only the **MultiClusterHub** CR and **`end_play`s**. Does **not** run **main** (no MCO removal). |
 
 ## Usage
 
@@ -116,6 +116,6 @@ Or:
 
 ## Notes
 
-- **`multiclusterhub_cr_only`** does not remove MCO or detach clusters; use **full** or run **main** separately if needed.
+- **`multiclusterhub_cr_only`** does not remove MCO; with **`cleanup_managed_clusters: true`** it still **detaches ManagedClusters before MCH**. Use **full** or **main** if you need MCO removed.
 - The role tolerates missing resources.
 - **`delete_operator_namespace: true`** does not wait for namespace termination; clear finalizers if stuck **Terminating**.

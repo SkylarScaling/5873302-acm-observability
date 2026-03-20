@@ -1,7 +1,14 @@
 ---
-# Full hub uninstall: MCO + detach (full mode only), MultiClusterHub, then operator/MCE/webhooks/namespace
+# Full hub uninstall: detach ManagedClusters before MCH, then MCO (full mode), MultiClusterHub, …
 
-- name: "Remove MCO and detach managed clusters before hub teardown"
+# CR-only: still detach managed clusters before deleting MCH (does not remove MCO unless you run main separately)
+- name: "Detach managed clusters before MultiClusterHub removal (CR-only path)"
+  ansible.builtin.include_tasks: managed_clusters_detach.yaml
+  when:
+    - acm_uninstall_mode | default('full') == 'multiclusterhub_cr_only'
+    - cleanup_managed_clusters | bool
+
+- name: "Remove MCO and detach managed clusters before hub teardown (full path)"
   ansible.builtin.include_tasks: main.yaml
   when: acm_uninstall_mode | default('full') == 'full'
 
