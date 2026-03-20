@@ -23,7 +23,8 @@ All saved manifests are written under `gitops_backup_dir` (default: `gitops-back
 5. Delete the Argo CD **ConsolePlugin** CR(s) (e.g. `gitops`).
 6. Delete the OpenShift GitOps operator Subscription.
 7. Optionally delete the operator CSV.
-8. When **`delete_gitops_namespace: true`**: strip finalizers on **Applications**, **ArgoCD**, **GitopsService**, OLM objects, and workloads **inside** `openshift-gitops`, then **`oc delete`/`k8s` the namespace**, then **`oc patch`** / optional **`jq` + `/finalize`** on the Namespace, then a **retry loop** if the namespace stays **Terminating** (same idea as `uninstall_acm`).
+8. When **`delete_gitops_operator_dedicated_namespace: true`**: **`oc delete operatorgroup -n openshift-gitops-operator --all`**, delete **`Namespace/openshift-gitops-operator`**, then finalizer strip on that namespace if needed.
+9. When **`delete_gitops_namespace: true`**: strip finalizers on **Applications**, **ArgoCD**, **GitopsService**, OLM objects, and workloads **inside** `openshift-gitops`, then delete that namespace, **`oc patch`** / **`jq` + `/finalize`**, and recovery retries (same idea as `uninstall_acm`).
 
 ## Requirements
 
@@ -89,6 +90,8 @@ Manifests are written to `./gitops-backup/` by default.
 |----------|---------|-------------|
 | `gitops_namespace` | `openshift-gitops` | Argo CD instance namespace. |
 | `gitops_operator_namespace` | `openshift-operators` | Namespace of the GitOps operator subscription. |
+| `gitops_operator_dedicated_namespace` | `openshift-gitops-operator` | Dedicated namespace used by some installs (OperatorGroup targets this). |
+| `delete_gitops_operator_dedicated_namespace` | `true` | Run `oc delete operatorgroup -n <dedicated> --all` then delete that namespace (no-op if absent). |
 | `gitops_operator_subscription_name` | `openshift-gitops-operator` | Name of the Subscription to remove. |
 | `gitops_backup_dir` | `{{ playbook_dir }}/gitops-backup` | Directory where manifests are saved. |
 | `save_argocd_rbac_cm` | `true` | Save the `argocd-rbac-cm` ConfigMap. |

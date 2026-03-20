@@ -260,6 +260,38 @@
     - gitops_current_csv is defined
     - delete_csv_result is failed
 
+# Dedicated openshift-gitops-operator namespace (when install used it instead of/in addition to openshift-operators)
+- name: "Delete all OperatorGroups in dedicated GitOps operator namespace"
+  ansible.builtin.command:
+    argv:
+      - oc
+      - delete
+      - operatorgroup
+      - -n
+      - "{{ gitops_operator_dedicated_namespace }}"
+      - --all
+      - --ignore-not-found
+  register: gitops_dedicated_og_delete
+  changed_when: gitops_dedicated_og_delete.rc == 0
+  failed_when: false
+  when: delete_gitops_operator_dedicated_namespace | bool
+
+- name: "Delete dedicated GitOps operator namespace (openshift-gitops-operator)"
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ gitops_operator_dedicated_namespace }}"
+    state: absent
+  when: delete_gitops_operator_dedicated_namespace | bool
+
+- name: "Clear finalizers on dedicated GitOps operator namespace (if Terminating)"
+  ansible.builtin.include_tasks: strip_namespace_finalizers.yaml
+  vars:
+    strip_namespace_name: "{{ gitops_operator_dedicated_namespace }}"
+  when:
+    - delete_gitops_operator_dedicated_namespace | bool
+    - strip_namespace_finalizers_on_delete | default(true) | bool
+
 # Strip finalizers on Argo CD / OLM objects in the namespace before deleting it (reduces Terminating + re-added namespace finalizers)
 - name: "Strip finalizers on namespaced resources in GitOps namespace (before namespace delete)"
   ansible.builtin.include_tasks: strip_finalizers_on_namespaced_resources.yaml
