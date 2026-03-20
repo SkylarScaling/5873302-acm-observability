@@ -1,6 +1,10 @@
 ---
-# Basic hub prep: remove MultiClusterObservability CR, then detach managed clusters
-# (KlusterletAddonConfig + ManagedCluster). Full teardown uses tasks_from: full_uninstall.yaml (imports hub_uninstall.yaml first).
+# Basic hub prep: detach managed clusters first, then remove MultiClusterObservability CR.
+# Order: ManagedClusters before MultiClusterHub (see hub_uninstall / managed_clusters_detach).
+
+- name: "Detach managed clusters before observability teardown"
+  ansible.builtin.include_tasks: managed_clusters_detach.yaml
+  when: cleanup_managed_clusters | bool
 
 - name: "Check if MultiClusterObservability custom resource exists"
   kubernetes.core.k8s_info:
@@ -19,68 +23,3 @@
     namespace: "{{ mco_cr_namespace }}"
     state: absent
   when: mco_cr_info.resources | default([]) | length > 0
-
-# - name: "Wait for MultiClusterObservability to be fully deleted"
-#   ...
-
-- name: "Get all ManagedCluster resources"
-  kubernetes.core.k8s_info:
-    api_version: cluster.open-cluster-management.io/v1
-    kind: ManagedCluster
-  register: managed_clusters
-  ignore_errors: true
-  failed_when: false
-  when: cleanup_managed_clusters | bool
-
-# KlusterletAddonConfig: remove before ManagedCluster
-- name: "Delete KlusterletAddonConfig for each managed cluster namespace"
-  kubernetes.core.k8s:
-    api_version: agent.open-cluster-management.io/v1
-    kind: KlusterletAddonConfig
-    name: "{{ item.metadata.name }}"
-    namespace: "{{ item.metadata.name }}"
-    state: absent
-  loop: "{{ managed_clusters.resources | default([]) }}"
-  when:
-    - cleanup_managed_clusters | bool
-    - managed_clusters.resources is defined
-    - managed_clusters.resources | length > 0
-  ignore_errors: true
-  failed_when: false
-
-- name: "List KlusterletAddonConfigs in hub namespace (if any)"
-  kubernetes.core.k8s_info:
-    api_version: agent.open-cluster-management.io/v1
-    kind: KlusterletAddonConfig
-    namespace: "{{ acm_multiclusterhub_namespace }}"
-  register: klusterlet_addon_configs_hub
-  ignore_errors: true
-  failed_when: false
-  when: cleanup_managed_clusters | bool
-
-- name: "Delete KlusterletAddonConfigs in hub namespace"
-  kubernetes.core.k8s:
-    api_version: agent.open-cluster-management.io/v1
-    kind: KlusterletAddonConfig
-    name: "{{ item.metadata.name }}"
-    namespace: "{{ item.metadata.namespace }}"
-    state: absent
-  loop: "{{ klusterlet_addon_configs_hub.resources | default([]) }}"
-  when:
-    - cleanup_managed_clusters | bool
-    - klusterlet_addon_configs_hub.resources | default([]) | length > 0
-  ignore_errors: true
-  failed_when: false
-
-- name: "Delete all ManagedCluster resources (detach)"
-  kubernetes.core.k8s:
-    api_version: cluster.open-cluster-management.io/v1
-    kind: ManagedCluster
-    name: "{{ item.metadata.name }}"
-    state: absent
-  loop: "{{ managed_clusters.resources | default([]) }}"
-  when:
-    - cleanup_managed_clusters | bool
-    - managed_clusters.resources is defined
-    - managed_clusters.resources | length > 0
-  ignore_errors: true

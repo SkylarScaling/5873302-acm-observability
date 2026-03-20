@@ -1,0 +1,58 @@
+---
+# Remove KlusterletAddonConfigs then ManagedCluster CRs (must run before MultiClusterHub delete when detaching spokes)
+
+- name: "Get all ManagedCluster resources"
+  kubernetes.core.k8s_info:
+    api_version: cluster.open-cluster-management.io/v1
+    kind: ManagedCluster
+  register: managed_clusters
+  ignore_errors: true
+  failed_when: false
+
+# KlusterletAddonConfig: remove before ManagedCluster
+- name: "Delete KlusterletAddonConfig for each managed cluster namespace"
+  kubernetes.core.k8s:
+    api_version: agent.open-cluster-management.io/v1
+    kind: KlusterletAddonConfig
+    name: "{{ item.metadata.name }}"
+    namespace: "{{ item.metadata.name }}"
+    state: absent
+  loop: "{{ managed_clusters.resources | default([]) }}"
+  when:
+    - managed_clusters.resources is defined
+    - managed_clusters.resources | length > 0
+  ignore_errors: true
+  failed_when: false
+
+- name: "List KlusterletAddonConfigs in hub namespace (if any)"
+  kubernetes.core.k8s_info:
+    api_version: agent.open-cluster-management.io/v1
+    kind: KlusterletAddonConfig
+    namespace: "{{ acm_multiclusterhub_namespace }}"
+  register: klusterlet_addon_configs_hub
+  ignore_errors: true
+  failed_when: false
+
+- name: "Delete KlusterletAddonConfigs in hub namespace"
+  kubernetes.core.k8s:
+    api_version: agent.open-cluster-management.io/v1
+    kind: KlusterletAddonConfig
+    name: "{{ item.metadata.name }}"
+    namespace: "{{ item.metadata.namespace }}"
+    state: absent
+  loop: "{{ klusterlet_addon_configs_hub.resources | default([]) }}"
+  when: klusterlet_addon_configs_hub.resources | default([]) | length > 0
+  ignore_errors: true
+  failed_when: false
+
+- name: "Delete all ManagedCluster resources (detach)"
+  kubernetes.core.k8s:
+    api_version: cluster.open-cluster-management.io/v1
+    kind: ManagedCluster
+    name: "{{ item.metadata.name }}"
+    state: absent
+  loop: "{{ managed_clusters.resources | default([]) }}"
+  when:
+    - managed_clusters.resources is defined
+    - managed_clusters.resources | length > 0
+  ignore_errors: true
