@@ -14,8 +14,17 @@ applicationset_git_directories:
   - path: acm
   - path: mco
 
-# Destination for generated Applications (hub in-cluster default)
+# When true, use matrix(git × clusters): one Application per (Git path × Argo-registered cluster).
+# When false, Git only; destination.server is applicationset_destination_server for every Application.
+applicationset_cluster_generator_enabled: true
+
+# Subset of clusters (Argo CD cluster secrets). Empty {} = all clusters Argo knows (in-cluster + registered).
+# Example: { matchLabels: { environment: "prod" } } — see Argo Cluster generator docs.
+applicationset_clusters_selector: {}
+
+# Used only when applicationset_cluster_generator_enabled is false
 applicationset_destination_server: https://kubernetes.default.svc
+
 # basename — use Git path basename as target namespace (one namespace per discovered directory)
 # fixed — use applicationset_destination_namespace for every Application
 applicationset_destination_namespace_mode: basename
