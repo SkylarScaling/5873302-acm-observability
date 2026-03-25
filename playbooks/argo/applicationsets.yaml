@@ -1,5 +1,5 @@
 ---
-- name: Create Argo CD ApplicationSets (Git directory generator)
+- name: Create Argo CD ApplicationSets (Git × clusters matrix by default)
   hosts: localhost
   vars_files:
     - ../group_vars/all.yaml
