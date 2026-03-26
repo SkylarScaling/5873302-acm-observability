@@ -1,0 +1,6 @@
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSet
+metadata:
+  name: {{ acm_managedclusterset_name }}
+spec:
+{{ acm_managedclusterset_spec | to_nice_yaml | indent(2, first=true) }}
