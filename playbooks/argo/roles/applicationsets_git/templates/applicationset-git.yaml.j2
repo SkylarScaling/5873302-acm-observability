@@ -21,12 +21,21 @@ spec:
                   exclude: {{ d.exclude | bool }}
 {% endif %}
 {% endfor %}
+{% if applicationset_cluster_selection == "placement" %}
+          - clusterDecisionResource:
+              configMapRef: {{ applicationset_placement_decision_configmap | to_json }}
+              labelSelector:
+                matchLabels:
+                  "cluster.open-cluster-management.io/placement": {{ applicationset_placement_name | to_json }}
+              requeueAfterSeconds: {{ applicationset_placement_requeue_after_seconds | int }}
+{% else %}
 {% if applicationset_clusters_selector | default({}) | length > 0 %}
           - clusters:
               selector:
 {{ applicationset_clusters_selector | to_nice_yaml | indent(16, first=true) }}
 {% else %}
           - clusters: {}
+{% endif %}
 {% endif %}
 {% else %}
     - git:
@@ -43,7 +52,11 @@ spec:
   template:
     metadata:
 {% if applicationset_cluster_generator_enabled | bool %}
+{% if applicationset_cluster_selection == "placement" %}
+      name: '{% raw %}{{ .clusterName }}-{{ .path.basenameNormalized }}{% endraw %}'
+{% else %}
       name: '{% raw %}{{ .name }}-{{ .path.basenameNormalized }}{% endraw %}'
+{% endif %}
 {% else %}
       name: '{% raw %}{{ .path.basenameNormalized }}{% endraw %}'
 {% endif %}
@@ -66,11 +79,7 @@ spec:
 {% else %}
         server: '{{ applicationset_destination_server }}'
 {% endif %}
-{% if applicationset_destination_namespace_mode == "basename" %}
-        namespace: '{% raw %}{{ .path.basenameNormalized }}{% endraw %}'
-{% else %}
         namespace: '{{ applicationset_destination_namespace }}'
-{% endif %}
       syncPolicy:
 {% if applicationset_sync_policy == "Automatic" %}
         automated:

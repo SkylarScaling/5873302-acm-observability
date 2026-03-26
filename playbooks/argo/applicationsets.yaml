@@ -1,5 +1,6 @@
 ---
-- name: Create Argo CD ApplicationSets (Git × clusters matrix by default)
+# ACM ManagedClusterSet / Binding / Placement (acm_gitops_clustersets) then Argo ApplicationSet (applicationsets_git).
+- name: Create Argo CD ApplicationSets (Git × PlacementDecision matrix by default)
   hosts: localhost
   vars_files:
     - ../group_vars/all.yaml
@@ -8,6 +9,12 @@
   gather_facts: false
   vars:
     ansible_python_interpreter: /Users/chrisquion/5873302-acm-observability/ansible-k8s-venv/.ansible-k8s/bin/python3
+    # Keep aligned if you change the GitOps namespace in applicationsets_git
+    acm_gitops_namespace: "{{ applicationset_namespace | default('openshift-gitops') }}"
+    # Align ApplicationSet clusterDecisionResource with acm_gitops_clustersets Placement + ConfigMap
+    applicationset_placement_name: "{{ acm_placement_name | default('argo-gitops-placement') }}"
+    applicationset_placement_decision_configmap: "{{ acm_placement_decision_configmap_name | default('argocd-placementdecision-config') }}"
   roles:
     - role: configure_argo
+    - role: acm_gitops_clustersets
     - role: applicationsets_git
