@@ -1,0 +1,35 @@
+apiVersion: v1
+baseDomain: {{ install_config.base_domain }}
+metadata:
+  name: {{ install_config.cluster_name }}
+networking:
+  networkType: {{ install_config.network_type | default('OVNKubernetes') }}
+  machineNetwork:
+    - cidr: {{ install_config.machine_network.cidr | default('10.0.0.0/16') }}
+  clusterNetwork:
+    - cidr: {{ install_config.cluster_network.cidr | default('10.128.0.0/14') }}
+      hostPrefix: 23
+  serviceNetwork:
+    - {{ install_config.service_network.cidr | default('172.30.0.0/16') }}
+compute:
+  - name: worker
+    replicas: {{ install_config.workers.replicas | default(3) }}
+controlPlane:
+  - name: master
+    replicas: {{ install_config.control_plane.replicas | default(3) }}
+platform:
+  vsphere:
+    vcenter: {{ vcenter.hostname }}
+    username: {{ vcenter.username }}
+    password: {{ vcenter.password }}
+    datacenter: {{ vcenter.datacenter }}
+    defaultDatastore: {{ vcenter.datastore }}
+    cluster: {{ vcenter.cluster }}
+    network: {{ vcenter.network }}
+    # Note: In strict UPI, we do not define apiVIP or ingressVIP here.
+    # OpenShift expects you to provide external DNS and an external Load Balancer.
+pullSecret: '{{ install_config.pull_secret | to_json }}'
+  {% if install_config.ssh_key is defined %}
+sshKey: |
+  {{ install_config.ssh_key }}
+  {% endif %}

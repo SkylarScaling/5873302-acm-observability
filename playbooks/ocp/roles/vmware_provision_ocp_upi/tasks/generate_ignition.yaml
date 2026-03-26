@@ -1,0 +1,33 @@
+---
+- name: Create install directory
+  ansible.builtin.file:
+    path: "{{ install_dir }}/{{ ocp_cluster.name }}"
+    state: directory
+    mode: '0755'
+
+- name: Template install-config.yaml
+  ansible.builtin.template:
+    src: install-config.yaml.j2
+    dest: "{{ install_dir }}/{{ ocp_cluster.name }}/install-config.yaml"
+
+# We create manifests first to prevent the installer from deleting the install-config
+- name: Generate Manifests
+  ansible.builtin.command: "{{ bin_dir }}/openshift-install create manifests --dir={{ install_dir }}/{{ ocp_cluster.name }}"
+
+- name: Prevent Pods from scheduling on Masters (Optional/Standard)
+  ansible.builtin.lineinfile:
+    path: "{{ install_dir }}/{{ ocp_cluster.name }}/manifests/cluster-scheduler-02-config.yml"
+    regexp: '^  mastersSchedulable:'
+    line: '  mastersSchedulable: false'
+
+- name: Generate Ignition Configs
+  ansible.builtin.command: "{{ bin_dir }}/openshift-install create ignition-configs --dir={{ install_dir }}/{{ ocp_cluster.name }}"
+
+- name: Slurp Ignition Files for VM Injection
+  ansible.builtin.slurp:
+    src: "{{ install_dir }}/{{ ocp_cluster.name }}/{{ item }}.ign"
+  register: ignition_data
+  loop:
+    - bootstrap
+    - master
+    - worker
