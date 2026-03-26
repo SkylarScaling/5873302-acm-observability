@@ -1,0 +1,24 @@
+---
+- name: Apply ManagedClusterSet
+  kubernetes.core.k8s:
+    state: present
+    template: managedclusterset.yaml.j2
+  when: acm_gitops_clustersets_enabled | bool
+
+- name: Apply ManagedClusterSetBinding in GitOps namespace
+  kubernetes.core.k8s:
+    state: present
+    template: managedclustersetbinding.yaml.j2
+  when: acm_gitops_clustersets_enabled | bool
+
+- name: Apply Placement in GitOps namespace
+  kubernetes.core.k8s:
+    state: present
+    template: placement.yaml.j2
+  when: acm_gitops_clustersets_enabled | bool
+
+- name: Apply ConfigMap for Argo ApplicationSet PlacementDecision generator
+  kubernetes.core.k8s:
+    state: present
+    template: placementdecision-argocd-configmap.yaml.j2
+  when: acm_gitops_clustersets_enabled | bool

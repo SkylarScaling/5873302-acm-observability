@@ -1,0 +1,24 @@
+---
+# Namespace for ManagedClusterSetBinding and Placement (OpenShift GitOps / Argo CD)
+acm_gitops_namespace: openshift-gitops
+
+# Set false if ACM is not installed or you manage these CRs elsewhere
+acm_gitops_clustersets_enabled: true
+
+# ManagedClusterSet (cluster-scoped). Default: ExclusiveClusterSetLabel — add to each ManagedCluster:
+#   metadata.labels.cluster.open-cluster-management.io/clusterset: <acm_managedclusterset_name>
+acm_managedclusterset_name: workload-test
+acm_managedclusterset_spec:
+  clusterSelector:
+    selectorType: ExclusiveClusterSetLabel
+
+# Binds the cluster set into acm_gitops_namespace so Placement can consume it
+acm_managedclustersetbinding_name: "{{ acm_managedclusterset_name }}"
+
+# ConfigMap for Argo CD ApplicationSet clusterDecisionResource (duck-type PlacementDecision)
+acm_placement_decision_configmap_name: argocd-placementdecision-config
+
+# Placement selects clusters from the set; controller writes PlacementDecision CRs for Argo to follow
+acm_placement_name: argo-gitops-placement
+# Merged into Placement spec after clusterSets (e.g. predicates, prioritizerPolicy)
+acm_placement_spec: {}
