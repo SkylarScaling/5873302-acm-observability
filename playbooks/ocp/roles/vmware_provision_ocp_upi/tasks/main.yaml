@@ -1,0 +1,31 @@
+---
+- name: Generate Ignition Configs
+  ansible.builtin.include_tasks: generate_ignition.yaml
+
+- name: Deploy Bootstrap VM
+  ansible.builtin.include_tasks: deploy_bootstrap.yaml
+
+- name: Deploy Master VMs
+  ansible.builtin.include_tasks: deploy_nodes.yaml
+  vars:
+    node_type: "master"
+    node_list: "{{ ocp_nodes.masters | default([{}, {}, {}]) }}"
+
+- name: Deploy Worker VMs
+  ansible.builtin.include_tasks: deploy_nodes.yaml
+  vars:
+    node_type: "worker"
+    node_list: "{{ ocp_nodes.workers | default([{}, {}, {}]) }}"
+
+- name: Wait for Bootstrap to Complete
+  ansible.builtin.command: "{{ bin_dir }}/openshift-install wait-for bootstrap-complete --dir={{ install_dir }}/{{ ocp_cluster.name }} --log-level=info"
+
+- name: Remove Bootstrap VM
+  community.vmware.vmware_guest:
+    hostname: "{{ vcenter.hostname }}"
+    username: "{{ vcenter.username }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: false
+    name: "{{ ocp_nodes.bootstrap.name | default(vm_name_prefix + '-bootstrap') }}"
+    state: absent
+    force: true

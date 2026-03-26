@@ -1,0 +1,10 @@
+---
+- name: Provision OCP Cluster on VMware
+  gather_facts: false
+  hosts: localhost
+  vars_files:
+    - ../group_vars/all.yaml
+  tasks:
+    - name: Execute VMware Provisioning Role
+      ansible.builtin.include_role:
+        name: vmware_provision_ocp_upi

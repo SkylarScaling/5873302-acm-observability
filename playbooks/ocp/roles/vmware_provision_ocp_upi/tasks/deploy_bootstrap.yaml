@@ -1,0 +1,33 @@
+---
+- name: Deploy Bootstrap VM
+  community.vmware.vmware_guest:
+    hostname: "{{ vcenter.hostname }}"
+    username: "{{ vcenter.username }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: false
+    datacenter: "{{ vcenter.datacenter }}"
+    cluster: "{{ vcenter.cluster }}"
+    folder: "/{{ vcenter.datacenter }}/vm/{{ ocp_cluster.name }}"
+
+    # Target custom name from inventory, fallback to default prefix
+    name: "{{ ocp_nodes.bootstrap.name | default(vm_name_prefix + '-bootstrap') }}"
+
+    template: "{{ vcenter.rhcos_template }}"
+    state: poweredon
+    hardware:
+      memory_mb: "{{ vm_specs.bootstrap.memory_mb }}"
+      num_cpus: "{{ vm_specs.bootstrap.cpu }}"
+    disk:
+      - size_gb: "{{ vm_specs.bootstrap.disk_gb }}"
+        type: thin
+        datastore: "{{ vcenter.datastore }}"
+    networks:
+      - name: "{{ vcenter.network }}"
+        mac: "{{ ocp_nodes.bootstrap.mac | default(omit) }}"
+    advanced_settings:
+      - key: guestinfo.ignition.config.data
+        value: "{{ (ignition_data.results | selectattr('item', 'equalto', 'bootstrap') | first).content }}"
+      - key: guestinfo.ignition.config.data.encoding
+        value: base64
+      - key: disk.EnableUUID
+        value: "TRUE"
