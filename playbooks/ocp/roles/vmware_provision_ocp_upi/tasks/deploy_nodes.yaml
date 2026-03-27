@@ -10,7 +10,7 @@
     folder: "{{ vcenter.folder }}"
 
     # Custom Naming Logic: Uses explicitly defined name, falls back to default prefix + type + index
-    name: "{{ item.name | default(vm_name_prefix + '-' + node_type + '-' + loop.index0|string) }}"
+    name: "{{ item.name | default(vm_name_prefix + '-' + node_type + '-' + node_idx|string) }}"
 
     template: "{{ vcenter.rhcos_template }}"
     state: poweredon
@@ -34,3 +34,5 @@
       - key: disk.EnableUUID
         value: "TRUE"
   loop: "{{ node_list }}"
+  loop_control:
+    index_var: node_idx

@@ -75,3 +75,37 @@ This block defines the specific EC2 instance types and replica counts for your O
 * **`pull_secret`**: The path to your Red Hat pull secret (downloaded from `console.redhat.com`). This authenticates your cluster to pull core OpenShift and Operator images.
 
 ---
+
+# RHCOS 4.20 on vmWare
+The demo.redhat environment for VMware only includes rhcos-4.16 by default. So if you want to install a different version,
+you will need to follow the following steps:
+
+- Copy this exact URL to your clipboard:
+
+    `https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.20/latest/rhcos-vmware.x86_64.ova`
+
+- Log into the vCenter UI (https://your-vcenter.infra.demo.redhat.com/ui/).
+
+- Navigate to the VMs and Templates view
+
+- Right-click your assigned folder (sandbox-xxxxx) and select Deploy OVF Template.
+
+- Select an OVF template: 
+  - Choose the URL option, paste the URL from step 1, and click Next.
+
+- Select a name and folder: 
+  - Name it exactly rhcos-4.20-template (to match your inventory) and ensure your sandbox-xxxxx folder is selected.
+
+- Select a compute resource: Choose your Cluster.
+
+- Select storage: Choose the datastore you picked earlier (e.g., workload_share_xxxxx).
+
+- Select networks: Choose segment-sandbox-xxxxx.
+
+- Click Finish and wait for the task to complete in the "Recent Tasks" pane at the bottom of vCenter.
+
+Once the VM appears in your folder:
+
+- Right-click the new rhcos-4.20-template VM.
+
+- Select Template > Convert to Template.
