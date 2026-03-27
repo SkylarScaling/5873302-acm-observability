@@ -7,7 +7,7 @@
     validate_certs: false
     datacenter: "{{ vcenter.datacenter }}"
     cluster: "{{ vcenter.cluster }}"
-    folder: "/{{ vcenter.datacenter }}/vm/{{ ocp_cluster.name }}"
+    folder: "{{ vcenter.folder }}"
 
     # Target custom name from inventory, fallback to default prefix
     name: "{{ ocp_nodes.bootstrap.name | default(vm_name_prefix + '-bootstrap') }}"

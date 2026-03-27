@@ -15,21 +15,30 @@ compute:
   - name: worker
     replicas: {{ install_config.workers.replicas | default(3) }}
 controlPlane:
-  - name: master
-    replicas: {{ install_config.control_plane.replicas | default(3) }}
+  name: master
+  replicas: {{ install_config.control_plane.replicas | default(3) }}
 platform:
   vsphere:
-    vcenter: {{ vcenter.hostname }}
-    username: {{ vcenter.username }}
-    password: {{ vcenter.password }}
-    datacenter: {{ vcenter.datacenter }}
-    defaultDatastore: {{ vcenter.datastore }}
-    cluster: {{ vcenter.cluster }}
-    network: {{ vcenter.network }}
-    # Note: In strict UPI, we do not define apiVIP or ingressVIP here.
-    # OpenShift expects you to provide external DNS and an external Load Balancer.
+    vcenters:
+      - server: {{ vcenter.hostname }}
+        user: {{ vcenter.username }}
+        password: {{ vcenter.password }}
+        datacenters:
+          - {{ vcenter.datacenter }}
+    failureDomains:
+      - name: default-failure-domain
+        region: default-region
+        zone: default-zone
+        server: {{ vcenter.hostname }}
+        topology:
+          datacenter: {{ vcenter.datacenter }}
+          computeCluster: /{{ vcenter.datacenter }}/host/{{ vcenter.cluster }}
+          datastore: /{{ vcenter.datacenter }}/datastore/{{ vcenter.datastore }}
+          networks:
+            - {{ vcenter.network }}
+          folder: {{ vcenter.folder }}
 pullSecret: '{{ install_config.pull_secret | to_json }}'
-  {% if install_config.ssh_key is defined %}
+{% if install_config.ssh_key is defined %}
 sshKey: |
   {{ install_config.ssh_key }}
-  {% endif %}
+{% endif %}

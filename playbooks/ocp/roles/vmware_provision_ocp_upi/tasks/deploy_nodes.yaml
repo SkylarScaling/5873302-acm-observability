@@ -7,7 +7,7 @@
     validate_certs: false
     datacenter: "{{ vcenter.datacenter }}"
     cluster: "{{ vcenter.cluster }}"
-    folder: "/{{ vcenter.datacenter }}/vm/{{ ocp_cluster.name }}"
+    folder: "{{ vcenter.folder }}"
 
     # Custom Naming Logic: Uses explicitly defined name, falls back to default prefix + type + index
     name: "{{ item.name | default(vm_name_prefix + '-' + node_type + '-' + loop.index0|string) }}"
