@@ -17,6 +17,12 @@
     node_type: "worker"
     node_list: "{{ ocp_nodes.workers | default([{}, {}, {}]) }}"
 
+- name: Configure Load Balancer with dynamic IPs
+  ansible.builtin.include_tasks: configure_lb.yaml
+
+- name: Wait for Bootstrap to Complete
+  ansible.builtin.command: "{{ bin_dir }}/openshift-install wait-for bootstrap-complete --dir={{ install_dir }}/{{ ocp_cluster.name }} --log-level=info"
+
 - name: Wait for Bootstrap to Complete
   ansible.builtin.command: "{{ bin_dir }}/openshift-install wait-for bootstrap-complete --dir={{ install_dir }}/{{ ocp_cluster.name }} --log-level=info"
 
