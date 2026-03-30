@@ -2,23 +2,57 @@ Example inventory:
 
 ```yaml
 all:
-  hosts:
-    localhost:
-      ansible_connection: local
+  children:
+    local:
+      hosts:
+        localhost:
+          ansible_connection: local
+    bastion:
+      hosts:
+        bastion-xxxxx.xxxxx.dynamic.redhatworkshops.io:
+          ansible_user: lab-user
+          ansible_password: <ssh_password>
+          ansible_become_password: <ssh_password>
+          ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
   vars:
-    home_dir: <home_dir>
+    home_dir: /home/sscaling
     tmp_dir: "{{ home_dir }}/tmp"
     openshift_version: "4.20"
     ocp_patch_version: "13"
     force_update: true
     ocp_cluster:
-      name: <cluster_name>
-      base_domain: <base_domain>
+      name: highmark-cluster
+      base_domain: xxxxx.dynamic.redhatworkshops.io
+
+    vcenter:
+      hostname: vcsnsx-vc.infra.demo.redhat.com
+      username: sandbox-xxxxx@demo
+      password: "<vmware_password>"
+      datacenter: SDDC-Datacenter
+      cluster: Cluster-1
+      datastore: workload_share_xxxxx #Find this in vSphere
+      network: segment-sandbox-xxxxx
+      folder: "/{{ vcenter.datacenter }}/vm/Workloads/sandbox-xxxxx"
+      rhcos_template: "rhcos-4.20-template"
+
+    ocp_nodes:
+      bootstrap:
+        name: "corp-p-ocp-boot-01"
+      masters:
+        - name: "corp-p-ocp-cp-01"
+        - name: "corp-p-ocp-cp-02"
+        - name: "corp-p-ocp-cp-03"
+      workers:
+        - name: "corp-p-ocp-wk-01"
+        - name: "corp-p-ocp-wk-02"
+        - name: "corp-p-ocp-wk-03"
+
     aws:
-      account_id: <aws_account_id>
-      aws_access_key_id: <aws_access_key_id>
-      aws_secret_access_key: <aws_secret_access_key>
-      aws_region: <aws_region>
+      account_id: ""
+      aws_access_key_id: ""
+      aws_secret_access_key: ""
+      aws_region: us-east-2
+
     install_config:
       cluster_name: "{{ ocp_cluster.name }}"
       base_domain: "{{ ocp_cluster.base_domain }}"
@@ -35,6 +69,7 @@ all:
         replicas: "3"
       ssh_key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
       pull_secret: "{{ lookup('file', '~/pull-secret.json') | from_json }}"
+
 ```
 
 ---
