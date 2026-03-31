@@ -26,8 +26,10 @@
         mac: "{{ ocp_nodes.bootstrap.mac | default(omit) }}"
     advanced_settings:
       - key: guestinfo.ignition.config.data
-        value: "{{ (ignition_data.results | selectattr('item', 'equalto', 'bootstrap') | first).content }}"
+        value: "{{ lookup('file', tmp_dir + '/install/' + ocp_cluster.name + '/append-bootstrap.ign') | b64encode }}"
       - key: guestinfo.ignition.config.data.encoding
         value: base64
       - key: disk.EnableUUID
         value: "TRUE"
+      - key: guestinfo.afterburn.initrd.network-kargs
+        value: "ip={{ ocp_nodes.bootstrap.ip }}::{{ ocp_nodes.network.gateway }}:{{ ocp_nodes.network.netmask }}:{{ ocp_nodes.bootstrap.name }}:ens192:none nameserver={{ ocp_nodes.network.dns }}"
