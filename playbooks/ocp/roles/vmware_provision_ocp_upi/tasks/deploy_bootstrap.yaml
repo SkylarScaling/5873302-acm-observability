@@ -32,4 +32,4 @@
       - key: disk.EnableUUID
         value: "TRUE"
       - key: guestinfo.afterburn.initrd.network-kargs
-        value: "ip={{ ocp_nodes.bootstrap.ip }}::{{ ocp_nodes.network.gateway }}:{{ ocp_nodes.network.netmask }}:{{ ocp_nodes.bootstrap.name }}:ens192:none nameserver={{ ocp_nodes.network.dns }}"
+        value: "ip={{ ocp_nodes.bootstrap.ip }}::{{ ocp_nodes.network.gateway }}:{{ ocp_nodes.network.netmask }}:{{ ocp_nodes.bootstrap.name }}::none nameserver={{ ocp_nodes.network.dns }}"
