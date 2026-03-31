@@ -8,8 +8,9 @@
     datacenter: "{{ vcenter.datacenter }}"
     name: "{{ ocp_nodes.bootstrap.name | default(vm_name_prefix + '-bootstrap') }}"
   register: bootstrap_info
-  until: bootstrap_info.instance.ipv4 is defined
-  retries: 30
+  # The 'true' flag forces default to replace NoneTypes with an empty string
+  until: bootstrap_info.instance.ipv4 | default('', true) | length > 0
+  retries: 60
   delay: 10
 
 - name: Wait for Master VMs to report IP addresses
@@ -24,8 +25,8 @@
   loop_control:
     index_var: node_idx
   register: masters_info
-  until: masters_info.instance.ipv4 is defined
-  retries: 30
+  until: masters_info.instance.ipv4 | default('', true) | length > 0
+  retries: 60
   delay: 10
 
 - name: Wait for Worker VMs to report IP addresses
@@ -40,8 +41,8 @@
   loop_control:
     index_var: node_idx
   register: workers_info
-  until: workers_info.instance.ipv4 is defined
-  retries: 30
+  until: workers_info.instance.ipv4 | default('', true) | length > 0
+  retries: 60
   delay: 10
 
 - name: Extract IP lists into facts
@@ -71,7 +72,7 @@
     enabled: false
   become: true
   delegate_to: "{{ groups['bastion'][0] }}"
-  ignore_errors: true # In case it's not installed
+  ignore_errors: true
 
 - name: Configure SELinux to allow HAProxy on OCP ports
   ansible.builtin.shell: |

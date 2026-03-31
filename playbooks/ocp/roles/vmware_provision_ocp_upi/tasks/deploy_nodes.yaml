@@ -33,6 +33,9 @@
         value: base64
       - key: disk.EnableUUID
         value: "TRUE"
+      # Inject Static IP Networking
+      - key: guestinfo.afterburn.initrd.network-kargs
+        value: "ip={{ item.ip }}::{{ ocp_nodes.network.gateway }}:{{ ocp_nodes.network.netmask }}:{{ item.name }}:ens192:none nameserver={{ ocp_nodes.network.dns }}"
   loop: "{{ node_list }}"
   loop_control:
     index_var: node_idx
