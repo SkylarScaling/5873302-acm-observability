@@ -31,3 +31,27 @@
     - bootstrap
     - master
     - worker
+
+- name: Create the Bootstrap Pointer File
+  ansible.builtin.copy:
+    dest: "{{ install_dir }}/{{ ocp_cluster.name }}/append-bootstrap.ign"
+    content: |
+      {
+        "ignition": {
+          "config": {
+            "merge": [
+              {
+                "source": "http://192.168.25.10:8080/bootstrap.ign"
+              }
+            ]
+          },
+          "version": "3.2.0"
+        }
+      }
+
+- name: Copy full bootstrap.ign to Bastion for hosting
+  ansible.builtin.copy:
+    src: "{{ install_dir }}/{{ ocp_cluster.name }}/bootstrap.ign"
+    dest: "/home/lab-user/bootstrap.ign"
+    mode: '0644'
+  delegate_to: "{{ groups['bastion'][0] }}"
