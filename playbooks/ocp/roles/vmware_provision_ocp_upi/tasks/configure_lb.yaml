@@ -1,55 +1,9 @@
 ---
-- name: Wait for Bootstrap VM to report IP address
-  community.vmware.vmware_guest_info:
-    hostname: "{{ vcenter.hostname }}"
-    username: "{{ vcenter.username }}"
-    password: "{{ vcenter.password }}"
-    validate_certs: false
-    datacenter: "{{ vcenter.datacenter }}"
-    name: "{{ ocp_nodes.bootstrap.name | default(vm_name_prefix + '-bootstrap') }}"
-  register: bootstrap_info
-  # The 'true' flag forces default to replace NoneTypes with an empty string
-  until: bootstrap_info.instance.ipv4 | default('', true) | length > 0
-  retries: 60
-  delay: 10
-
-- name: Wait for Master VMs to report IP addresses
-  community.vmware.vmware_guest_info:
-    hostname: "{{ vcenter.hostname }}"
-    username: "{{ vcenter.username }}"
-    password: "{{ vcenter.password }}"
-    validate_certs: false
-    datacenter: "{{ vcenter.datacenter }}"
-    name: "{{ item.name | default(vm_name_prefix + '-master-' + node_idx|string) }}"
-  loop: "{{ ocp_nodes.masters }}"
-  loop_control:
-    index_var: node_idx
-  register: masters_info
-  until: masters_info.instance.ipv4 | default('', true) | length > 0
-  retries: 60
-  delay: 10
-
-- name: Wait for Worker VMs to report IP addresses
-  community.vmware.vmware_guest_info:
-    hostname: "{{ vcenter.hostname }}"
-    username: "{{ vcenter.username }}"
-    password: "{{ vcenter.password }}"
-    validate_certs: false
-    datacenter: "{{ vcenter.datacenter }}"
-    name: "{{ item.name | default(vm_name_prefix + '-worker-' + node_idx|string) }}"
-  loop: "{{ ocp_nodes.workers }}"
-  loop_control:
-    index_var: node_idx
-  register: workers_info
-  until: workers_info.instance.ipv4 | default('', true) | length > 0
-  retries: 60
-  delay: 10
-
 - name: Extract IP lists into facts
   ansible.builtin.set_fact:
-    bootstrap_ip: "{{ bootstrap_info.instance.ipv4 }}"
-    master_ips: "{{ masters_info.results | map(attribute='instance.ipv4') | list }}"
-    worker_ips: "{{ workers_info.results | map(attribute='instance.ipv4') | list }}"
+    bootstrap_ip: "{{ ocp_nodes.bootstrap.ip }}"
+    master_ips: "{{ ocp_nodes.masters | map(attribute='ip') | list }}"
+    worker_ips: "{{ ocp_nodes.workers | map(attribute='ip') | list }}"
 
 - name: Display fetched IPs
   ansible.builtin.debug:
