@@ -23,19 +23,18 @@
         datastore: "{{ vcenter.datastore }}"
     networks:
       - name: "{{ vcenter.network }}"
-        # Mac address mapping can be added here if you are using static DHCP reservations
-        mac: "{{ item.mac | default(omit) }}"
+        mac: "00:50:56:00:{{ '%02x' % (item.ip.split('.')[2] | int) }}:{{ '%02x' % (item.ip.split('.')[3] | int) }}"
+    networks:
+      - name: "{{ vcenter.network }}"
     advanced_settings:
-      # Inject the Base64 encoded ignition config directly into the VM properties
       - key: guestinfo.ignition.config.data
         value: "{{ (ignition_data.results | selectattr('item', 'equalto', node_type) | first).content }}"
       - key: guestinfo.ignition.config.data.encoding
         value: base64
       - key: disk.EnableUUID
         value: "TRUE"
-      # Inject Static IP Networking
       - key: guestinfo.afterburn.initrd.network-kargs
-        value: "ip={{ item.ip }}::{{ ocp_nodes.network.gateway }}:{{ ocp_nodes.network.netmask }}:{{ item.name }}::none nameserver={{ ocp_nodes.network.dns }}"
+        value: "ip={{ item.ip }}::{{ ocp_nodes.network.gateway }}:{{ ocp_nodes.network.netmask }}:{{ item.name }}:eth0:none nameserver={{ ocp_nodes.network.dns }}"
   loop: "{{ node_list }}"
   loop_control:
     index_var: node_idx

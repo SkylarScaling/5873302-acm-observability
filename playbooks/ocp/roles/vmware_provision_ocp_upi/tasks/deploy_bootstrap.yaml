@@ -23,7 +23,7 @@
         datastore: "{{ vcenter.datastore }}"
     networks:
       - name: "{{ vcenter.network }}"
-        mac: "{{ ocp_nodes.bootstrap.mac | default(omit) }}"
+        mac: "00:50:56:00:{{ '%02x' % (ocp_nodes.bootstrap.ip.split('.')[2] | int) }}:{{ '%02x' % (ocp_nodes.bootstrap.ip.split('.')[3] | int) }}"
     advanced_settings:
       - key: guestinfo.ignition.config.data
         value: "{{ lookup('file', tmp_dir + '/install/' + ocp_cluster.name + '/append-bootstrap.ign') | b64encode }}"
@@ -32,4 +32,4 @@
       - key: disk.EnableUUID
         value: "TRUE"
       - key: guestinfo.afterburn.initrd.network-kargs
-        value: "ip={{ ocp_nodes.bootstrap.ip }}::{{ ocp_nodes.network.gateway }}:{{ ocp_nodes.network.netmask }}:{{ ocp_nodes.bootstrap.name }}::none nameserver={{ ocp_nodes.network.dns }}"
+        value: "ip={{ ocp_nodes.bootstrap.ip }}::{{ ocp_nodes.network.gateway }}:{{ ocp_nodes.network.netmask }}:{{ ocp_nodes.bootstrap.name }}:eth0:none nameserver={{ ocp_nodes.network.dns }}"

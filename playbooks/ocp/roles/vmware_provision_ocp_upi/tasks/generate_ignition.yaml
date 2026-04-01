@@ -63,8 +63,31 @@
   become: true
   delegate_to: "{{ groups['bastion'][0] }}"
 
-- name: Start simple HTTP server on Bastion to host bootstrap.ign
-  ansible.builtin.shell: "nohup python3 -m http.server 8080 --directory /home/lab-user > /tmp/ignition_http.log 2>&1 &"
-  async: 10
-  poll: 0
+- name: Create ignition-server systemd unit on Bastion
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/ignition-server.service
+    content: |
+      [Unit]
+      Description=Ignition HTTP Server
+      After=network.target
+
+      [Service]
+      Type=simple
+      User=lab-user
+      WorkingDirectory=/home/lab-user
+      ExecStart=/usr/bin/python3 -m http.server 8080
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+  become: true
+  delegate_to: "{{ groups['bastion'][0] }}"
+
+- name: Start and enable ignition-server service
+  ansible.builtin.systemd:
+    name: ignition-server
+    state: restarted
+    enabled: true
+    daemon_reload: true
+  become: true
   delegate_to: "{{ groups['bastion'][0] }}"
