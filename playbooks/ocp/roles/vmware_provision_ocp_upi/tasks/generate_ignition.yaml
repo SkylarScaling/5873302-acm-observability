@@ -41,7 +41,7 @@
           "config": {
             "merge": [
               {
-                "source": "http://192.168.25.10:8080/bootstrap.ign"
+                "source": "http://{{ hostvars[groups['bastion'][0]]['bastion_internal_ip'] }}:8080/bootstrap.ign"
               }
             ]
           },
@@ -54,4 +54,17 @@
     src: "{{ install_dir }}/{{ ocp_cluster.name }}/bootstrap.ign"
     dest: "/home/lab-user/bootstrap.ign"
     mode: '0644'
+  delegate_to: "{{ groups['bastion'][0] }}"
+
+- name: Open port 8080 on Bastion firewall for Ignition hosting
+  ansible.builtin.shell: |
+    firewall-cmd --add-port=8080/tcp --permanent || true
+    firewall-cmd --reload || true
+  become: true
+  delegate_to: "{{ groups['bastion'][0] }}"
+
+- name: Start simple HTTP server on Bastion to host bootstrap.ign
+  ansible.builtin.shell: "nohup python3 -m http.server 8080 --directory /home/lab-user > /tmp/ignition_http.log 2>&1 &"
+  async: 10
+  poll: 0
   delegate_to: "{{ groups['bastion'][0] }}"
