@@ -2,8 +2,6 @@
 # ApplicationSet metadata
 applicationset_name: gitops-generated-apps
 applicationset_namespace: openshift-gitops
-# Always the Argo CD namespace; must match applicationset_namespace
-applicationset_destination_namespace: "{{ applicationset_namespace }}"
 
 # AppProject for generated Applications (must allow gitops_repo_url in sourceRepos)
 applicationset_project: acm

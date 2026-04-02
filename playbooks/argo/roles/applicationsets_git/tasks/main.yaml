@@ -8,14 +8,6 @@
       Override via inventory, group_vars, or -e.
     quiet: true
 
-- name: Destination namespace must be the Argo CD namespace
-  ansible.builtin.assert:
-    that:
-      - applicationset_destination_namespace == applicationset_namespace
-    fail_msg: >-
-      applicationset_destination_namespace must equal applicationset_namespace (sync target is the OpenShift GitOps namespace).
-    quiet: true
-
 - name: Apply ApplicationSet (clusterDecisionResource)
   kubernetes.core.k8s:
     state: present

@@ -32,7 +32,7 @@ spec:
 {% endif %}
       destination:
         server: '{% raw %}{{ .server }}{% endraw %}'
-        namespace: '{{ applicationset_destination_namespace }}'
+        namespace: '{{ applicationset_namespace }}'
       syncPolicy:
 {% if applicationset_sync_policy == "Automatic" %}
         automated:
