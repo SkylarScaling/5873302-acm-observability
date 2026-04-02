@@ -1,0 +1,13 @@
+---
+- name: Install OpenShift on VMware (UPI) Initialization
+  gather_facts: false
+  hosts: localhost
+  tasks:
+    - debug:
+        msg: "Provisioning OCP Cluster on VMware with Custom Naming"
+
+- name: Install Pre-requisites
+  ansible.builtin.import_playbook: ../playbooks/ocp/install-ocp-prerequisites.yaml
+
+- name: Provision OCP Cluster on VMware
+  ansible.builtin.import_playbook: ../playbooks/ocp/provision-vmware-cluster.yaml
