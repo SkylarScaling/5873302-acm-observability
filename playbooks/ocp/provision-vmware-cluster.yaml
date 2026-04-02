@@ -1,0 +1,16 @@
+---
+- name: Provision OCP Cluster on VMware via ACM
+  gather_facts: false
+  hosts: localhost
+  vars_files:
+    - ../group_vars/all.yaml
+
+  environment:
+    K8S_AUTH_HOST: "{{ acm_hub.api_url }}"
+    K8S_AUTH_API_KEY: "{{ acm_hub.token }}"
+    K8S_AUTH_VERIFY_SSL: "{{ acm_hub.validate_certs }}"
+
+  tasks:
+    - name: Execute ACM Agent Provisioning Role
+      ansible.builtin.include_role:
+        name: acm_agent_provision

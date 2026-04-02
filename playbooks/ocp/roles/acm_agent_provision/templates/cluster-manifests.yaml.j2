@@ -1,0 +1,74 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ ocp_cluster.name }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ ocp_cluster.name }}-pull-secret
+  namespace: {{ ocp_cluster.name }}
+type: kubernetes.io/dockerconfigjson
+stringData:
+  .dockerconfigjson: '{{ install_config.pull_secret | to_json }}'
+---
+apiVersion: hive.openshift.io/v1
+kind: ClusterDeployment
+metadata:
+  name: {{ ocp_cluster.name }}
+  namespace: {{ ocp_cluster.name }}
+spec:
+  baseDomain: {{ ocp_cluster.base_domain }}
+  clusterName: {{ ocp_cluster.name }}
+  clusterInstallRef:
+    group: extensions.hive.openshift.io
+    kind: AgentClusterInstall
+    name: {{ ocp_cluster.name }}
+    version: v1beta1
+  platform:
+    agentBareMetal:
+      agentSelector:
+        matchLabels:
+          infraEnv: {{ ocp_cluster.name }}
+  pullSecretRef:
+    name: {{ ocp_cluster.name }}-pull-secret
+---
+apiVersion: extensions.hive.openshift.io/v1beta1
+kind: AgentClusterInstall
+metadata:
+  name: {{ ocp_cluster.name }}
+  namespace: {{ ocp_cluster.name }}
+spec:
+  clusterDeploymentRef:
+    name: {{ ocp_cluster.name }}
+  imageSetRef:
+    name: img{{ openshift_version }}.{{ ocp_patch_version }}-x86-64-appsub
+  networking:
+    clusterNetwork:
+      - cidr: 10.128.0.0/14
+        hostPrefix: 23
+    machineNetwork:
+      - cidr: 192.168.25.0/24
+    networkType: OVNKubernetes
+    serviceNetwork:
+      - 172.30.0.0/16
+  provisionRequirements:
+    controlPlaneAgents: 3
+    workerAgents: 3
+---
+apiVersion: agent-install.openshift.io/v1beta1
+kind: InfraEnv
+metadata:
+  name: {{ ocp_cluster.name }}
+  namespace: {{ ocp_cluster.name }}
+spec:
+  clusterRef:
+    name: {{ ocp_cluster.name }}
+    namespace: {{ ocp_cluster.name }}
+  pullSecretRef:
+    name: {{ ocp_cluster.name }}-pull-secret
+  sshAuthorizedKey: "{{ install_config.ssh_key }}"
+  nmStateConfigLabelSelector:
+    matchLabels:
+      infraEnv: {{ ocp_cluster.name }}
