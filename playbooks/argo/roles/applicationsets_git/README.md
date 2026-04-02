@@ -18,8 +18,7 @@ Cluster targeting is exclusively via **PlacementDecision**; **`spec.destination.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `applicationset_name` | `gitops-generated-apps` | `ApplicationSet` metadata name |
-| `applicationset_namespace` | `openshift-gitops` | Namespace for `ApplicationSet` / `Application` metadata |
-| `applicationset_destination_namespace` | same as `applicationset_namespace` | `spec.destination.namespace` (must equal `applicationset_namespace`; role asserts) |
+| `applicationset_namespace` | `openshift-gitops` | Namespace for `ApplicationSet` / `Application` metadata and `spec.destination.namespace` |
 | `applicationset_project` | `acm` | Argo **AppProject** |
 | `applicationset_repo_revision` | `main` | Git ref |
 | `applicationset_source_path` | `mco` | `spec.source.path` under `gitops_repo_url` |
