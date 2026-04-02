@@ -8,65 +8,22 @@ metadata:
 spec:
   goTemplate: true
   generators:
-{% if applicationset_cluster_generator_enabled | bool %}
-    - matrix:
-        generators:
-          - git:
-              repoURL: {{ gitops_repo_url | to_json }}
-              revision: {{ applicationset_repo_revision | to_json }}
-              directories:
-{% for d in applicationset_git_directories %}
-                - path: {{ d.path | to_json }}
-{% if d.exclude is defined %}
-                  exclude: {{ d.exclude | bool }}
-{% endif %}
-{% endfor %}
-{% if applicationset_cluster_selection == "placement" %}
-          - clusterDecisionResource:
-              configMapRef: {{ applicationset_placement_decision_configmap | to_json }}
-              labelSelector:
-                matchLabels:
-                  "cluster.open-cluster-management.io/placement": {{ applicationset_placement_name | to_json }}
-              requeueAfterSeconds: {{ applicationset_placement_requeue_after_seconds | int }}
-{% else %}
-{% if applicationset_clusters_selector | default({}) | length > 0 %}
-          - clusters:
-              selector:
-{{ applicationset_clusters_selector | to_nice_yaml | indent(16, first=true) }}
-{% else %}
-          - clusters: {}
-{% endif %}
-{% endif %}
-{% else %}
-    - git:
-        repoURL: {{ gitops_repo_url | to_json }}
-        revision: {{ applicationset_repo_revision | to_json }}
-        directories:
-{% for d in applicationset_git_directories %}
-          - path: {{ d.path | to_json }}
-{% if d.exclude is defined %}
-            exclude: {{ d.exclude | bool }}
-{% endif %}
-{% endfor %}
-{% endif %}
+    - clusterDecisionResource:
+        configMapRef: {{ applicationset_placement_decision_configmap | to_json }}
+        labelSelector:
+          matchLabels:
+            "cluster.open-cluster-management.io/placement": {{ applicationset_placement_name | to_json }}
+        requeueAfterSeconds: {{ applicationset_placement_requeue_after_seconds | int }}
   template:
     metadata:
-{% if applicationset_cluster_generator_enabled | bool %}
-{% if applicationset_cluster_selection == "placement" %}
-      name: '{% raw %}{{ .clusterName }}-{{ .path.basenameNormalized }}{% endraw %}'
-{% else %}
-      name: '{% raw %}{{ .name }}-{{ .path.basenameNormalized }}{% endraw %}'
-{% endif %}
-{% else %}
-      name: '{% raw %}{{ .path.basenameNormalized }}{% endraw %}'
-{% endif %}
+      name: '{% raw %}{{ .clusterName }}{% endraw %}-{{ applicationset_application_suffix }}'
       namespace: '{{ applicationset_namespace }}'
     spec:
       project: '{{ applicationset_project }}'
       source:
         repoURL: {{ gitops_repo_url | to_json }}
         targetRevision: {{ applicationset_repo_revision | to_json }}
-        path: '{% raw %}{{ .path.path }}{% endraw %}'
+        path: {{ applicationset_source_path | to_json }}
         directory:
 {% if applicationset_directory_recurse | bool %}
           recurse: true
@@ -74,11 +31,7 @@ spec:
           recurse: false
 {% endif %}
       destination:
-{% if applicationset_cluster_generator_enabled | bool %}
         server: '{% raw %}{{ .server }}{% endraw %}'
-{% else %}
-        server: '{{ applicationset_destination_server }}'
-{% endif %}
         namespace: '{{ applicationset_destination_namespace }}'
       syncPolicy:
 {% if applicationset_sync_policy == "Automatic" %}
