@@ -1,22 +1,14 @@
 ---
-- name: Require at least one Git directory rule
+- name: Require a non-empty Git source path
   ansible.builtin.assert:
     that:
-      - applicationset_git_directories | length > 0
+      - applicationset_source_path | length > 0
     fail_msg: >-
-      Set applicationset_git_directories to a non-empty list (each item: path, e.g. { path: 'apps/*' }).
+      Set applicationset_source_path to the directory under gitops_repo_url (e.g. mco or acm/subdir).
       Override via inventory, group_vars, or -e.
     quiet: true
 
-- name: Destination namespace must be the Argo CD namespace
-  ansible.builtin.assert:
-    that:
-      - applicationset_destination_namespace == applicationset_namespace
-    fail_msg: >-
-      applicationset_destination_namespace must equal applicationset_namespace (sync target is the OpenShift GitOps namespace).
-    quiet: true
-
-- name: Apply ApplicationSet (Git directory generator)
+- name: Apply ApplicationSet (clusterDecisionResource)
   kubernetes.core.k8s:
     state: present
     template: applicationset-git.yaml.j2

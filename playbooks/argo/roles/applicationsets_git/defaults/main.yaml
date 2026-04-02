@@ -2,44 +2,26 @@
 # ApplicationSet metadata
 applicationset_name: gitops-generated-apps
 applicationset_namespace: openshift-gitops
-# Always the Argo CD namespace; must match applicationset_namespace
-applicationset_destination_namespace: "{{ applicationset_namespace }}"
 
 # AppProject for generated Applications (must allow gitops_repo_url in sourceRepos)
 applicationset_project: acm
 
 applicationset_repo_revision: main
 
-# Git directory generator: each matching path under the repo becomes one Application.
-# Each item is a directory rule (path supports globs, e.g. apps/*). See Argo ApplicationSet Git generator docs.
-applicationset_git_directories:
-  - path: acm
-  - path: mco
+# Single manifest path in gitops_repo_url; clusterDecisionResource does not enumerate directories.
+applicationset_source_path: mco
 
-# When true, use matrix(git × cluster source). When false, Git only; destination.server is applicationset_destination_server.
-applicationset_cluster_generator_enabled: true
+# Application name suffix: generated apps are named <clusterName>-<suffix>
+applicationset_application_suffix: mco
 
-# How to resolve spoke clusters when cluster_generator_enabled:
-#   placement — matrix(git × clusterDecisionResource) follows OCM PlacementDecision (label matches applicationset_placement_name; keep in sync with acm_placement_name)
-#   argocd   — matrix(git × clusters) uses Argo CD cluster secrets only
-applicationset_cluster_selection: placement
-
-# ConfigMap in applicationset_namespace (from acm_gitops_clustersets by default); duck-typing for PlacementDecision
+# ConfigMap in applicationset_namespace (from acm_gitops_clustersets); duck-typing for PlacementDecision
 applicationset_placement_decision_configmap: argocd-placementdecision-config
 
 # PlacementDecision label cluster.open-cluster-management.io/placement — must match acm_placement_name
 applicationset_placement_name: argo-gitops-placement
 
-# clusterDecisionResource requeue (optional)
 applicationset_placement_requeue_after_seconds: 60
 
-# Argo clusters generator only (applicationset_cluster_selection: argocd)
-applicationset_clusters_selector: {}
-
-# Used when applicationset_cluster_generator_enabled is false, or unused for destination when cluster gen uses .server
-applicationset_destination_server: https://kubernetes.default.svc
-
-# Directory source (per generated Application)
 applicationset_directory_recurse: true
 
 # Automatic | Manual (no automated block when Manual)
