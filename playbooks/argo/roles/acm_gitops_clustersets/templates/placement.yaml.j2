@@ -1,0 +1,11 @@
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: {{ acm_placement_name }}
+  namespace: {{ acm_gitops_namespace }}
+spec:
+  clusterSets:
+    - {{ acm_managedclusterset_name }}
+{% if acm_placement_spec | default({}) | length > 0 %}
+{{ acm_placement_spec | to_nice_yaml | indent(2, first=true) }}
+{% endif %}

@@ -1,0 +1,7 @@
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSetBinding
+metadata:
+  name: {{ acm_managedclustersetbinding_name }}
+  namespace: {{ acm_gitops_namespace }}
+spec:
+  clusterSet: {{ acm_managedclusterset_name }}
