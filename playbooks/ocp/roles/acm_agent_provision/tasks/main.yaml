@@ -1,0 +1,313 @@
+---
+# --- PHASE 1: VM CREATION & MAC GATHERING ---
+
+- name: "Create Master VMs (Powered Off to assign MACs)"
+  community.vmware.vmware_guest:
+    hostname: "{{ vcenter.hostname }}"
+    username: "{{ vcenter.username }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: false
+    datacenter: "{{ vcenter.datacenter }}"
+    cluster: "{{ vcenter.cluster }}"
+    folder: "{{ vcenter.folder }}"
+    name: "{{ item.name }}"
+    guest_id: "coreos64Guest"
+    state: present
+    hardware:
+      memory_mb: 32768
+      num_cpus: 8
+    disk:
+      - size_gb: 120
+        type: thin
+        datastore: "{{ vcenter.datastore }}"
+        controller_type: paravirtual
+        controller_number: 0
+        unit_number: 0
+    networks:
+      - name: "{{ vcenter.network }}"
+        device_type: vmxnet3
+  loop: "{{ ocp_nodes.masters }}"
+  register: master_vms_created
+
+- name: "Create Worker VMs (Powered Off to assign MACs)"
+  community.vmware.vmware_guest:
+    hostname: "{{ vcenter.hostname }}"
+    username: "{{ vcenter.username }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: false
+    datacenter: "{{ vcenter.datacenter }}"
+    cluster: "{{ vcenter.cluster }}"
+    folder: "{{ vcenter.folder }}"
+    name: "{{ item.name }}"
+    guest_id: "coreos64Guest"
+    state: present
+    hardware:
+      memory_mb: 32768
+      num_cpus: 8
+    disk:
+      - size_gb: 120
+        type: thin
+        datastore: "{{ vcenter.datastore }}"
+        controller_type: paravirtual
+        controller_number: 0
+        unit_number: 0
+    networks:
+      - name: "{{ vcenter.network }}"
+        device_type: vmxnet3
+  loop: "{{ ocp_nodes.workers }}"
+  register: worker_vms_created
+
+# --- PHASE 2: STATIC IP CONFIGURATION ---
+
+- name: "Apply NMStateConfigs for Master Nodes"
+  kubernetes.core.k8s:
+    state: present
+    template: nmstate-config.yaml.j2
+  loop: "{{ master_vms_created.results }}"
+  vars:
+    node_name: "{{ item.item.name }}"
+    node_ip: "{{ item.item.ip }}"
+    node_mac: "{{ item.instance.hw_eth0.macaddress | lower }}"
+
+- name: "Apply NMStateConfigs for Worker Nodes"
+  kubernetes.core.k8s:
+    state: present
+    template: nmstate-config.yaml.j2
+  loop: "{{ worker_vms_created.results }}"
+  vars:
+    node_name: "{{ item.item.name }}"
+    node_ip: "{{ item.item.ip }}"
+    node_mac: "{{ item.instance.hw_eth0.macaddress | lower }}"
+
+# --- PHASE 3: MANIFESTS & ISO GENERATION ---
+
+- name: "Apply Core Cluster Manifests to ACM Hub"
+  kubernetes.core.k8s:
+    state: present
+    template: cluster-manifests.yaml.j2
+
+- name: "Wait for InfraEnv to generate the Discovery ISO URL"
+  kubernetes.core.k8s_info:
+    api_version: agent-install.openshift.io/v1beta1
+    kind: InfraEnv
+    name: "{{ ocp_cluster.name }}"
+    namespace: "{{ ocp_cluster.name }}"
+  register: infraenv_info
+  until:
+    - infraenv_info.resources | length > 0
+    - infraenv_info.resources[0].status is defined
+    - infraenv_info.resources[0].status.isoDownloadURL is defined
+  retries: 30
+  delay: 10
+
+# TODO: Commenting this out for demo.redhat, because it is giving an "object is not subscriptable" error.
+# TODO: Manually uploading iso from last task and re-running...
+#- name: "Download Discovery ISO from ACM to Bastion tmp_dir"
+#  ansible.builtin.get_url:
+#    url: "{{ infraenv_info.resources[0].status.isoDownloadURL }}"
+#    dest: "{{ tmp_dir }}/{{ ocp_cluster.name }}-discovery.iso"
+#    validate_certs: false
+#    timeout: 300
+
+#- name: "Upload Discovery ISO to VMware Datastore"
+#  community.vmware.vsphere_copy:
+#    hostname: "{{ vcenter.hostname }}"
+#    username: "{{ vcenter.username }}"
+#    password: "{{ vcenter.password }}"
+#    validate_certs: false
+#    datacenter: "{{ vcenter.datacenter }}"
+#    datastore: "{{ vcenter.datastore }}"
+#    src: "{{ tmp_dir }}/{{ ocp_cluster.name }}-discovery.iso"
+#    path: "isos/{{ ocp_cluster.name }}-discovery.iso"
+#  register: iso_download
+#  until: iso_download is success
+#  retries: 20
+#  delay: 30
+
+# --- PHASE 4: MANUAL UPLOAD PAUSE ---
+
+- name: "PAUSE FOR MANUAL ISO UPLOAD"
+  ansible.builtin.pause:
+    prompt: |
+      
+      ========================================================================
+      ACTION REQUIRED:
+      1. Download the ISO from this URL:
+         {{ infraenv_info.resources[0].status.isoDownloadURL }}
+      
+      2. Log into vCenter and navigate to datastore: {{ vcenter.datastore }}
+      
+      3. Upload the ISO into the 'isos' folder.
+      
+      4. Rename the file to EXACTLY: {{ ocp_cluster.name }}-discovery.iso
+      ========================================================================
+      
+      Press ENTER to continue once the upload is 100% complete...
+
+# --- PHASE 5: BOOT AND PROVISION ---
+
+- name: "Attach CD-ROM to Master VMs"
+  community.vmware.vmware_guest:
+    hostname: "{{ vcenter.hostname }}"
+    username: "{{ vcenter.username }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: false
+    datacenter: "{{ vcenter.datacenter }}"
+    name: "{{ item.item.name }}"
+    state: present
+    cdrom:
+      - type: iso
+        iso_path: "[{{ vcenter.datastore }}] isos/{{ ocp_cluster.name }}-discovery.iso"
+        controller_type: ide
+        controller_number: 0
+        unit_number: 0
+  loop: "{{ master_vms_created.results }}"
+
+- name: "Attach CD-ROM to Worker VMs"
+  community.vmware.vmware_guest:
+    hostname: "{{ vcenter.hostname }}"
+    username: "{{ vcenter.username }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: false
+    datacenter: "{{ vcenter.datacenter }}"
+    name: "{{ item.item.name }}"
+    state: present
+    cdrom:
+      - type: iso
+        iso_path: "[{{ vcenter.datastore }}] isos/{{ ocp_cluster.name }}-discovery.iso"
+        controller_type: ide
+        controller_number: 0
+        unit_number: 0
+  loop: "{{ worker_vms_created.results }}"
+
+- name: "Power On All Cluster VMs"
+  community.vmware.vmware_guest_powerstate:
+    hostname: "{{ vcenter.hostname }}"
+    username: "{{ vcenter.username }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: false
+    name: "{{ item.name }}"
+    state: powered-on
+  loop: "{{ ocp_nodes.masters + ocp_nodes.workers }}"
+
+- name: "Wait for all Agents to register with the ACM Hub"
+  kubernetes.core.k8s_info:
+    api_version: agent-install.openshift.io/v1beta1
+    kind: Agent
+    namespace: "{{ ocp_cluster.name }}"
+  register: registered_agents
+  until: registered_agents.resources | length == ((ocp_nodes.masters | length) + (ocp_nodes.workers | length))
+  retries: 60
+  delay: 30
+
+- name: "Approve and Configure Master Agents"
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: agent-install.openshift.io/v1beta1
+      kind: Agent
+      metadata:
+        name: "{{ agent_item.metadata.name }}"
+        namespace: "{{ ocp_cluster.name }}"
+      spec:
+        approved: true
+        hostname: "{{ node_name }}"
+        role: master
+        clusterDeploymentName:
+          name: "{{ ocp_cluster.name }}"
+          namespace: "{{ ocp_cluster.name }}"
+  loop: "{{ master_vms_created.results }}"
+  vars:
+    node_name: "{{ item.item.name }}"
+    node_mac: "{{ item.instance.hw_eth0.macaddress | lower }}"
+    agent_item: >-
+      {{
+        registered_agents.resources |
+        selectattr('status.inventory', 'defined') |
+        selectattr('status.inventory', 'search', node_mac) |
+        first
+      }}
+
+- name: "Approve and Configure Worker Agents"
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: agent-install.openshift.io/v1beta1
+      kind: Agent
+      metadata:
+        name: "{{ agent_item.metadata.name }}"
+        namespace: "{{ ocp_cluster.name }}"
+      spec:
+        approved: true
+        hostname: "{{ node_name }}"
+        role: worker
+        clusterDeploymentName:
+          name: "{{ ocp_cluster.name }}"
+          namespace: "{{ ocp_cluster.name }}"
+  loop: "{{ worker_vms_created.results }}"
+  vars:
+    node_name: "{{ item.item.name }}"
+    node_mac: "{{ item.instance.hw_eth0.macaddress | lower }}"
+    agent_item: >-
+      {{
+        registered_agents.resources |
+        selectattr('status.inventory', 'defined') |
+        selectattr('status.inventory', 'search', node_mac) |
+        first
+      }}
+
+- name: "Wait for AgentClusterInstall validations to pass (Ready to Install)"
+  kubernetes.core.k8s_info:
+    api_version: extensions.hive.openshift.io/v1beta1
+    kind: AgentClusterInstall
+    name: "{{ ocp_cluster.name }}"
+    namespace: "{{ ocp_cluster.name }}"
+  register: aci_info
+  until: >
+    aci_info.resources | length > 0 and
+    aci_info.resources[0].status.conditions is defined and
+    (aci_info.resources[0].status.conditions | selectattr('type', 'equalto', 'Validated') | map(attribute='status') | first | default('False')) == 'True'
+  retries: 30
+  delay: 20
+
+- name: "Wait for OpenShift Cluster Installation to Complete (This will take 30-45 minutes)"
+  kubernetes.core.k8s_info:
+    api_version: extensions.hive.openshift.io/v1beta1
+    kind: AgentClusterInstall
+    name: "{{ ocp_cluster.name }}"
+    namespace: "{{ ocp_cluster.name }}"
+  register: cluster_install_status
+  until: >
+    cluster_install_status.resources | length > 0 and
+    cluster_install_status.resources[0].status.conditions is defined and
+    (cluster_install_status.resources[0].status.conditions | selectattr('type', 'equalto', 'Completed') | map(attribute='status') | first | default('False')) == 'True'
+  retries: 60
+  delay: 60
+
+- name: "Fetch kubeconfig for the new cluster"
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: "{{ ocp_cluster.name }}-admin-kubeconfig"
+    namespace: "{{ ocp_cluster.name }}"
+  register: new_cluster_kubeconfig
+
+- name: "Fetch kubeadmin password for the new cluster"
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Secret
+    name: "{{ ocp_cluster.name }}-admin-password"
+    namespace: "{{ ocp_cluster.name }}"
+  register: new_cluster_password
+
+- name: "Display Final Handoff Credentials"
+  ansible.builtin.debug:
+    msg:
+      - "=================================================================="
+      - "🎉 CLUSTER PROVISIONING COMPLETE VIA ACM! 🎉"
+      - "=================================================================="
+      - "Cluster Name: {{ ocp_cluster.name }}"
+      - "Web Console:  https://console-openshift-console.apps.{{ ocp_cluster.name }}.{{ ocp_cluster.base_domain }}/"
+      - "Username:     kubeadmin"
+      - "Password:     {{ new_cluster_password.resources[0].data.password | b64decode }}"
+      - "=================================================================="

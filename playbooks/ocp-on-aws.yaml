@@ -28,21 +28,33 @@
   environment:
     KUBECONFIG: "{{ install_dir }}/{{ ocp_cluster.name }}/auth/kubeconfig"
   tasks:
-    - name: Wait for all ArgoCD Applications to be Healthy and Synced
+    - name: Discover all currently deployed Argo CD Applications
       kubernetes.core.k8s_info:
         api_version: argoproj.io/v1alpha1
         kind: Application
         namespace: openshift-gitops
-      register: argo_apps
-      until: >
-        argo_apps.resources | length >= 4 and
-        (argo_apps.resources | selectattr('status.health.status', 'defined') | 
-         selectattr('status.health.status', 'equalto', 'Healthy') | list | length == argo_apps.resources | length) and
-        (argo_apps.resources | selectattr('status.sync.status', 'defined') | 
-         selectattr('status.sync.status', 'equalto', 'Synced') | list | length == argo_apps.resources | length)
-      # Wait up to 45 minutes (90 retries * 30 seconds) for ODF, ACM, and MCO to fully deploy
-      retries: 90
+      register: discovered_argo_apps
+
+    - name: Wait for all discovered Argo CD Applications to be Healthy and Synced
+      kubernetes.core.k8s_info:
+        api_version: argoproj.io/v1alpha1
+        kind: Application
+        name: "{{ item.metadata.name }}"
+        namespace: openshift-gitops
+      register: app_status
+      # This until block safely checks nested dictionaries, preventing "undefined" crashes
+      until:
+        - app_status.resources | length > 0
+        - app_status.resources[0].status is defined
+        - app_status.resources[0].status.health is defined
+        - app_status.resources[0].status.health.status | default('Unknown') == 'Healthy'
+        - app_status.resources[0].status.sync is defined
+        - app_status.resources[0].status.sync.status | default('Unknown') == 'Synced'
+      retries: 40       # Wait up to 20 minutes per app (40 * 30 seconds)
       delay: 30
+      loop: "{{ discovered_argo_apps.resources }}"
+      loop_control:
+        label: "{{ item.metadata.name }}" # Keeps Ansible console output clean
 
     - name: Fetch kubeadmin password from install directory
       ansible.builtin.slurp:
