@@ -69,6 +69,11 @@ spec:
   pullSecretRef:
     name: {{ ocp_cluster.name }}-pull-secret
   sshAuthorizedKey: "{{ install_config.ssh_key }}"
+
+  # 1. TELL ACM TO BAKE THE ENTIRE OS ONTO THE ISO (Bypasses DHCP/PXE requirement)
+  imageType: full-iso
+
+  # 2. TELL ACM TO INJECT THE STATIC IP CONFIGS INTO THE FULL ISO
   nmStateConfigLabelSelector:
     matchLabels:
       infraEnv: {{ ocp_cluster.name }}

@@ -102,12 +102,12 @@
 
 # TODO: Commenting this out for demo.redhat, because it is giving an "object is not subscriptable" error.
 # TODO: Manually uploading iso from last task and re-running...
-#- name: "Download Discovery ISO from ACM to Bastion tmp_dir"
-#  ansible.builtin.get_url:
-#    url: "{{ infraenv_info.resources[0].status.isoDownloadURL }}"
-#    dest: "{{ tmp_dir }}/{{ ocp_cluster.name }}-discovery.iso"
-#    validate_certs: false
-#    timeout: 300
+- name: "Download Discovery ISO from ACM to Bastion tmp_dir"
+  ansible.builtin.get_url:
+    url: "{{ infraenv_info.resources[0].status.isoDownloadURL }}"
+    dest: "{{ tmp_dir }}/{{ ocp_cluster.name }}-discovery.iso"
+    validate_certs: false
+    timeout: 300
 
 #- name: "Upload Discovery ISO to VMware Datastore"
 #  community.vmware.vsphere_copy:
